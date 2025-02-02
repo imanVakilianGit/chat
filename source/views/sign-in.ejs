@@ -1,0 +1,21 @@
+<%- include('layout', { title: 'Sign In', body: `
+    <div class="container d-flex justify-content-center align-items-center vh-100">
+        <div class="card p-4 shadow" style="width: 100%; max-width: 400px;">
+            <h2 class="text-center mb-4">Sign In</h2>
+            <form id="signin-form" action="/signin" method="POST">
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="email" name="email" required>
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="password" name="password" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Sign In</button>
+            </form>
+            <p class="text-center mt-3">
+                Don't have an account? <a href="/signup">Sign Up</a>
+            </p>
+        </div>
+    </div>
+` }) %>
