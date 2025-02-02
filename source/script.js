@@ -1,6 +1,6 @@
 document
     .getElementById("chat-form")
-    .addEventListener("submit", function (event) {
+    ?.addEventListener("submit", function (event) {
         event.preventDefault();
         const input = document.getElementById("chat-input");
         const message = input.value.trim();
@@ -34,7 +34,7 @@ document
         // Simulate signup (replace with actual API call)
         console.log("Signing up with:", { username, email, password });
         alert("Signup successful! Redirecting to signin page...");
-        window.location.href = "signin.html";
+        window.location.href = "/auth/signin";
     });
 
 // Signin Form Submission
@@ -48,5 +48,5 @@ document
         // Simulate signin (replace with actual API call)
         console.log("Signing in with:", { email, password });
         alert("Signin successful! Redirecting to chat page...");
-        window.location.href = "index.html"; // Redirect to chat page
+        window.location.href = "/"; // Redirect to chat page
     });
