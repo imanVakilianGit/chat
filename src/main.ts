@@ -2,6 +2,8 @@ import { createServer } from "http";
 import express, { Express, Request, Response } from "express";
 import * as dotEnv from "dotenv";
 
+import { APP_ROUTER } from "./app/app.routes";
+
 class Main {
     private readonly _app: Express = express();
     private readonly _port: number = Number(process.env.APP_PORT) || 7199;
@@ -11,7 +13,7 @@ class Main {
         this._listen();
         this._setting();
         this._templateEjs();
-        this._mainPage();
+        this._routes();
     }
 
     private _listen() {
@@ -22,19 +24,16 @@ class Main {
 
     private _setting() {
         dotEnv.config();
+        this._app.use(express.static(`${process.cwd()}/source`));
     }
 
     private _templateEjs() {
         this._app.set("view engine", "ejs");
         this._app.set("views", `${process.cwd()}/source/views`);
-        express.static(`${process.cwd()}/source`);
     }
 
-    private _mainPage() {
-        this._app.get("/", (req: Request, res: Response) => {
-            res.render("index");
-            return;
-        });
+    private _routes() {
+        this._app.use(APP_ROUTER);
     }
 }
 new Main();
