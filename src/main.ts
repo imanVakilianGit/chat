@@ -27,6 +27,7 @@ class Main {
     private _setting() {
         dotEnv.config();
         this._app.use(express.static(`${process.cwd()}/source`));
+        this._app.use(express.json());
     }
 
     private _mongoConnection() {
