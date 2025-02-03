@@ -1,3 +1,3 @@
-export class AuthService {}
+export class AuthServiceClass {}
 
-export const AUTH_SERVICE = new AuthService();
+export const AuthService = new AuthServiceClass();

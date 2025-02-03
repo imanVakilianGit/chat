@@ -1,7 +1,7 @@
-export class AppService {
+export class AppServiceClass {
     mainPage(): void {
         return;
     }
 }
 
-export const APP_SERVICE = new AppService();
+export const AppService = new AppServiceClass();

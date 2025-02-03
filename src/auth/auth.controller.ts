@@ -1,8 +1,9 @@
 import { NextFunction, Request, Response } from "express";
-import { AUTH_SERVICE, AuthService } from "./auth.service";
 
-export class AuthController {
-    private readonly _authService: AuthService = AUTH_SERVICE;
+import { AuthService, AuthServiceClass } from "./auth.service";
+
+export class AuthControllerClass {
+    private readonly _authService: AuthServiceClass = AuthService;
 
     signup(req: Request, res: Response, next: NextFunction): void {
         res.render("sign-up");
@@ -22,4 +23,4 @@ export class AuthController {
     }
 }
 
-export const AUTH_CONTROLLER = new AuthController();
+export const AuthController = new AuthControllerClass();

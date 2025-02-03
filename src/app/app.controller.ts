@@ -1,8 +1,9 @@
 import { NextFunction, Request, Response } from "express";
-import { APP_SERVICE, AppService } from "./app.service";
 
-export class AppController {
-    private readonly _appService: AppService = APP_SERVICE;
+import { AppService, AppServiceClass } from "./app.service";
+
+export class AppControllerClass {
+    private readonly _appService: AppServiceClass = AppService;
 
     mainPage(req: Request, res: Response, next: NextFunction): void {
         res.render("index");
@@ -10,4 +11,4 @@ export class AppController {
     }
 }
 
-export const APP_CONTROLLER = new AppController();
+export const AppController = new AppControllerClass();
