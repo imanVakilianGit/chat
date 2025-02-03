@@ -3,6 +3,7 @@ import express, { Express, Request, Response } from "express";
 import * as dotEnv from "dotenv";
 
 import { APP_ROUTER } from "./app/app.routes";
+import mongoose from "mongoose";
 
 class Main {
     private readonly _app: Express = express();
@@ -12,19 +13,35 @@ class Main {
     constructor() {
         this._listen();
         this._setting();
+        this._mongoConnection();
         this._templateEjs();
         this._routes();
     }
 
     private _listen() {
         createServer(this._app).listen(this._port, () => {
-            console.log(`app running at: http://${this._host}:${this._port}`);
+            console.log(`App running at: http://${this._host}:${this._port}`);
         });
     }
 
     private _setting() {
         dotEnv.config();
         this._app.use(express.static(`${process.cwd()}/source`));
+    }
+
+    private _mongoConnection() {
+        mongoose
+            .connect(process.env.DATABASE_URI || "")
+            .then(() => {})
+            .catch(() => {});
+
+        mongoose.connection.on("connected", () => {
+            console.log("Mongo db connected successfully...");
+        });
+
+        mongoose.connection.on("disconnected", () => {
+            console.log("Mongo db connection failed...");
+        });
     }
 
     private _templateEjs() {
