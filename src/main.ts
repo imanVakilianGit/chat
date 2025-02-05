@@ -1,9 +1,16 @@
 import { createServer } from "http";
-import express, { Express, Request, Response } from "express";
+import express, {
+    ErrorRequestHandler,
+    Express,
+    NextFunction,
+    Request,
+    Response,
+} from "express";
 import * as dotEnv from "dotenv";
+import mongoose from "mongoose";
+import cookieParser from "cookie-parser";
 
 import { APP_ROUTER } from "./app/app.routes";
-import mongoose from "mongoose";
 
 class Main {
     private readonly _app: Express = express();
@@ -16,6 +23,7 @@ class Main {
         this._mongoConnection();
         this._templateEjs();
         this._routes();
+        this._errorHandler();
     }
 
     private _listen() {
@@ -28,6 +36,7 @@ class Main {
         dotEnv.config();
         this._app.use(express.static(`${process.cwd()}/source`));
         this._app.use(express.json());
+        this._app.use(cookieParser(process.env.COOKIE_SECRET));
     }
 
     private _mongoConnection() {
@@ -52,6 +61,24 @@ class Main {
 
     private _routes() {
         this._app.use(APP_ROUTER);
+    }
+
+    private _errorHandler() {
+        this._app.use(
+            (err, req: Request, res: Response, next: NextFunction) => {
+                console.dir(
+                    { "main.ts:69:err": err },
+                    { depth: null, colors: true }
+                );
+
+                res.status(err.statusCode).json({
+                    success: err.success ?? false,
+                    statusCode: err.statusCode ?? 500,
+                    message: err.message ?? "internal server error",
+                    redirect: err.redirect ?? undefined,
+                });
+            }
+        );
     }
 }
 new Main();

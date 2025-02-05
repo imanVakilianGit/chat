@@ -1,0 +1,25 @@
+<%- include('layout', { title: 'Verify Auth Code', body: `
+    <div class="container d-flex justify-content-center align-items-center vh-100">
+        <div class="card p-4 shadow" style="width: 100%; max-width: 400px;">
+            <h2 class="text-center mb-4">Verify Auth Code</h2>
+            <form id="otp-code-form" action="/auth/verify-otp" method="POST">
+                <div class="mb-3">
+                    <label for="auth-code" class="form-label">6-Digit Code</label>
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="auth-code"
+                        name="authCode"
+                        placeholder="Enter 6-digit code"
+                        maxlength="6"
+                        required
+                    >
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Verify</button>
+            </form>
+            <p class="text-center mt-3">
+                Didn't receive a code? <a href="/auth/resend-code">Resend Code</a>
+            </p>
+        </div>
+    </div>
+` }) %>

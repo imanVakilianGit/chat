@@ -1,0 +1,6 @@
+validation for inputs.
+create global error handle.
+create function for throw error that in input gets valid statusCode & message & other fields need
+send otp code to email.
+every route should have redirect prop in responses
+handle event for verify-otp in front
