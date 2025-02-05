@@ -7,6 +7,10 @@ class UserRepositoryClass {
         return this._model.findOne({ email });
     }
 
+    findOneById(id: string) {
+        return this._model.findById(id);
+    }
+
     create(data: {
         email: string;
         firstName: string;

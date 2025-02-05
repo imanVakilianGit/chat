@@ -13,7 +13,7 @@ async function getResultAndProcess({ path, body }) {
             const data = await result.json(); // Parse the JSON response
             console.log("Server response:", data);
             alert(
-                `successful! message: ${data.message} message: ${data.message}... and Redirecting to page: ${data.redirect}`
+                `successful! message: ${data.message}... and Redirecting to page: ${data.redirect}`
             );
             if (data.redirect) window.location.href = data.redirect; // Redirect to the exact page
         } else {

@@ -10,10 +10,12 @@ export function renderGuestGuard(
         const accessToken = req.signedCookies["access-token"];
         const refreshToken = req.signedCookies["refresh-token"];
 
-        if (accessToken || refreshToken) {
+        if (accessToken && refreshToken) {
             res.redirect("/");
             return;
         }
+        if (accessToken) res.clearCookie("access-token");
+        if (refreshToken) res.clearCookie("refresh-token");
 
         next();
     } catch (error) {
@@ -26,7 +28,7 @@ export function guestGuard(req: Request, res: Response, next: NextFunction) {
         const accessToken = req.signedCookies["access-token"];
         const refreshToken = req.signedCookies["refresh-token"];
 
-        if (accessToken || refreshToken) {
+        if (accessToken && refreshToken) {
             next(
                 response({
                     statusCode: 403,
@@ -36,6 +38,9 @@ export function guestGuard(req: Request, res: Response, next: NextFunction) {
             );
             return;
         }
+        if (accessToken) res.clearCookie("access-token");
+        if (refreshToken) res.clearCookie("refresh-token");
+
         next();
     } catch (error) {
         next(error);
