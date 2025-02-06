@@ -9,13 +9,24 @@ import express, {
 import * as dotEnv from "dotenv";
 import mongoose from "mongoose";
 import cookieParser from "cookie-parser";
+import { Server } from "socket.io";
 
 import { APP_ROUTER } from "./app/app.routes";
+import path from "path";
+import { JwtService } from "./jwt/jwt.service";
+import { SocketServiceClass } from "./socket/socket.service";
 
 class Main {
     private readonly _app: Express = express();
     private readonly _port: number = Number(process.env.APP_PORT) || 7199;
     private readonly _host: string = process.env.APP_HOST || "localhost";
+    private readonly _server = createServer(this._app);
+    private readonly _io = new Server(this._server, {
+        cors: {
+            origin: "*",
+            methods: ["GET", "POST"],
+        },
+    });
 
     constructor() {
         this._listen();
@@ -24,10 +35,11 @@ class Main {
         this._templateEjs();
         this._routes();
         this._errorHandler();
+        this._ioConnection();
     }
 
     private _listen() {
-        createServer(this._app).listen(this._port, () => {
+        this._server.listen(this._port, () => {
             console.log(`App running at: http://${this._host}:${this._port}`);
         });
     }
@@ -36,6 +48,7 @@ class Main {
         dotEnv.config();
         this._app.use(express.static(`${process.cwd()}/source`));
         this._app.use(express.json());
+        this._app.use(express.urlencoded({ extended: true }));
         this._app.use(cookieParser(process.env.COOKIE_SECRET));
     }
 
@@ -79,6 +92,10 @@ class Main {
                 });
             }
         );
+    }
+
+    private _ioConnection() {
+        new SocketServiceClass(this._io);
     }
 }
 new Main();

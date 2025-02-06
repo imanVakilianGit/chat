@@ -112,3 +112,18 @@ document
             },
         });
     });
+
+document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("create-group-form");
+
+    form?.addEventListener("submit", async (event) => {
+        event.preventDefault(); // Prevent default form submission
+
+        const name = document.getElementById("name").value;
+        const nickName = document.getElementById("nickname").value;
+        const bio = document.getElementById("bio").value;
+        const body = { name, nickName };
+        if (bio) Object.assign({ bio }, body);
+        getResultAndProcess({ path: "/group/create", body });
+    });
+});

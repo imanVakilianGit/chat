@@ -35,7 +35,10 @@ export async function renderAuthGuard(
                 res.redirect("/auth/signup");
                 return;
             }
+            res.cookie("socket-token", accessToken);
+            req["user"] = user;
             next();
+            return;
         }
 
         if (!validateAccessToken["expiredAt"]) {
@@ -69,7 +72,9 @@ export async function renderAuthGuard(
             newRefreshToken,
             REFRESH_TOKEN_COOKIE_OPTION
         );
+        res.cookie("socket-token", newAccessToken);
 
+        req["user"] = user;
         next();
     } catch (error) {
         console.dir(
@@ -118,14 +123,19 @@ export async function authGuard(
                         redirect: "/auth/signup",
                     })
                 );
+                return;
             }
+            res.cookie("socket-token", accessToken);
+            req["user"] = user;
             next();
+            return;
         }
 
         if (!validateAccessToken["expiredAt"]) {
             next(
                 exceptionHandler({ statusCode: 403, redirect: "/auth/signin" })
             );
+            return;
         }
 
         if (!validateRefreshToken["userId"]) {
@@ -161,6 +171,8 @@ export async function authGuard(
             newRefreshToken,
             REFRESH_TOKEN_COOKIE_OPTION
         );
+        res.cookie("socket-token", newAccessToken);
+        req["user"] = user;
         next();
     } catch (error) {
         next(error);

@@ -1,10 +1,13 @@
-import { model, Schema, SchemaDefinitionProperty } from "mongoose";
+import { model, ObjectId, Schema, SchemaDefinitionProperty } from "mongoose";
 
-interface UserInterface {
+export interface UserInterface {
+    _id: ObjectId;
     email: string;
     firstName: string;
     lastName?: string;
     bio?: string;
+    createdAt: Date;
+    updatedAt: Date;
 }
 
 const UserSchema = new Schema<UserInterface>(

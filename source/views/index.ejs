@@ -1,23 +1,32 @@
 <%- include('layout', { title: 'Chat Application', body: `
     <div class="container-fluid vh-100 d-flex flex-column">
         <div class="row flex-grow-1">
+            <!-- Sidebar for Chat Rooms and Search -->
             <div class="col-md-3 bg-light p-3 border-end">
                 <h4>Chat Rooms</h4>
-                <ul class="list-group">
-                    <li class="list-group-item">Room 1</li>
-                    <li class="list-group-item">Room 2</li>
-                    <li class="list-group-item">Room 3</li>
+                <div class="mb-3">
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="search-rooms"
+                        placeholder="Search rooms..."
+                    >
+                </div>
+                <ul class="list-group" id="room-list">
+                    <!-- Room list will be populated dynamically -->
                 </ul>
             </div>
+
+            <!-- Main Chat Window -->
             <div class="col-md-9 d-flex flex-column p-0">
+                <!-- Messages Component -->
                 <div class="flex-grow-1 p-3 overflow-auto" id="chat-window">
-                    <div class="message received">
-                        <strong>User1:</strong> Hello!
-                    </div>
-                    <div class="message sent">
-                        <strong>You:</strong> Hi there!
+                    <div id="messages">
+                        <!-- Messages will be populated dynamically -->
                     </div>
                 </div>
+
+                <!-- Message Input Form -->
                 <div class="p-3 border-top">
                     <form id="chat-form" class="d-flex">
                         <input type="text" id="chat-input" class="form-control me-2" placeholder="Type a message...">
@@ -27,4 +36,81 @@
             </div>
         </div>
     </div>
+
+    <!-- Socket.IO Client Library -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        // Initialize Socket.IO
+        const socketToken = document.cookie.split('=')[1];
+        console.log(socketToken);
+        const socket = io('',{
+            auth: {
+                token: socketToken,
+            }
+        });
+
+        // Fetch and display room list
+        socket.emit("group-list", '')
+        socket.on("groups", (rooms) => {
+            console.log(rooms);
+            const roomList = document.getElementById("room-list");
+            roomList.innerHTML = rooms.map(room => 
+                '<li class="list-group-item" data-room="' + room._id + '">' +
+                    room.name +
+                '</li>'
+            ).join("");
+
+            // Add click event to room items
+            roomList.querySelectorAll("li").forEach(item => {
+                item.addEventListener("click", () => {
+                    const roomId = item.getAttribute("data-room");
+                    socket.emit("join-room", roomId);
+                });
+            });
+        });
+
+        // Fetch and display messages for a room
+        socket.on("room-messages", (messages) => {
+            const messagesContainer = document.getElementById("messages");
+            messagesContainer.innerHTML = messages.map(msg => 
+                '<div class="message ' + (msg.sender === "You" ? "sent" : "received") + '">' +
+                    '<strong>' + msg.sender + ':</strong> ' + msg.text +
+                '</div>'
+            ).join("");
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        });
+
+        // Handle message submission
+        document.getElementById("chat-form").addEventListener("submit", function (event) {
+            event.preventDefault();
+            const input = document.getElementById("chat-input");
+            const message = input.value.trim();
+
+            if (message) {
+                socket.emit("send-message", message);
+                input.value = "";
+            }
+        });
+
+        // Handle incoming messages
+        socket.on("receive-message", (message) => {
+            const messagesContainer = document.getElementById("messages");
+            const messageElement = document.createElement("div");
+            messageElement.classList.add("message", "received");
+            messageElement.innerHTML = '<strong>' + message.sender + ':</strong> ' + message.text;
+            messagesContainer.appendChild(messageElement);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        });
+
+        // Handle search functionality
+        document.getElementById("search-rooms").addEventListener("input", function () {
+            const searchTerm = this.value.toLowerCase();
+            const roomItems = document.querySelectorAll("#room-list li");
+
+            roomItems.forEach(item => {
+                const roomName = item.textContent.toLowerCase();
+                item.style.display = roomName.includes(searchTerm) ? "block" : "none";
+            });
+        });
+    </script>
 ` }) %>

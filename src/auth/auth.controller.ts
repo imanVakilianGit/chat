@@ -94,6 +94,7 @@ export class AuthControllerClass {
 
             if (cookie.isNewUser) {
                 res.json({ ok: true, redirect: "/user/create-account" });
+                return;
             }
 
             res.cookie(

@@ -2,9 +2,11 @@ create function for throw error that in input gets valid statusCode & message & 
 create global error handle. DONE
 every route should have redirect prop in responses. DONE
 handle event for verify-otp in front. DONE
+auth guard. DONE
 
 send otp code to email.
 validation for inputs.
 add lint and prettier.
-auth guard.
-if message exists => alert message response.
+if message in response exists => alert message response.
+validate refresh token and save it into memory.
+add feature profile.
