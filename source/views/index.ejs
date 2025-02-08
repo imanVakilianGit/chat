@@ -1,6 +1,16 @@
 <%- include('layout', { title: 'Chat Application', body: `
     <div class="container-fluid vh-100 d-flex flex-column">
         <div class="row flex-grow-1">
+            <!-- Left Side Menu -->
+            <div class="col-md-1 bg-light p-3 border-end">
+                <h4>Menu</h4>
+                <ul class="list-group">
+                    <li class="list-group-item">
+                        <a href="/group/create" class="btn btn-primary w-100">Create Group</a>
+                    </li>
+                </ul>
+            </div>
+
             <!-- Sidebar for Chat Rooms and Search -->
             <div class="col-md-3 bg-light p-3 border-end">
                 <h4>Chat Rooms</h4>
@@ -18,7 +28,7 @@
             </div>
 
             <!-- Main Chat Window -->
-            <div class="col-md-9 d-flex flex-column p-0">
+            <div class="col-md-7 d-flex flex-column p-0">
                 <!-- Messages Component -->
                 <div class="flex-grow-1 p-3 overflow-auto" id="chat-window">
                     <div id="messages">
@@ -43,33 +53,33 @@
         // Initialize Socket.IO
         const socketToken = document.cookie.split('=')[1];
         console.log(socketToken);
-        const socket = io('',{
+        const socket = io('', {
             auth: {
                 token: socketToken,
             }
         });
 
-        // Fetch and display room list
-        socket.emit("group-list", '')
-        socket.on("groups", (rooms) => {
-            console.log(rooms);
+        // Fetch and display group list
+        socket.emit("group-list", '');
+        socket.on("groups", (groups) => {
+            console.log(groups);
             const roomList = document.getElementById("room-list");
-            roomList.innerHTML = rooms.map(room => 
-                '<li class="list-group-item" data-room="' + room._id + '">' +
-                    room.name +
+            roomList.innerHTML = groups.map(group => 
+                '<li class="list-group-item" data-room="' + group._id + '">' +
+                    group.nickName +
                 '</li>'
             ).join("");
 
-            // Add click event to room items
-            roomList.querySelectorAll("li").forEach(item => {
-                item.addEventListener("click", () => {
-                    const roomId = item.getAttribute("data-room");
-                    socket.emit("join-room", roomId);
-                });
-            });
+            // Add click event to group items
+            // roomList.querySelectorAll("li").forEach(item => {
+            //     item.addEventListener("click", () => {
+            //         const groupId = item.getAttribute("data-room");
+            //         socket.emit("join-room", groupId); // Join the selected group
+            //     });
+            // });
         });
 
-        // Fetch and display messages for a room
+        // Fetch and display messages for a group
         socket.on("room-messages", (messages) => {
             const messagesContainer = document.getElementById("messages");
             messagesContainer.innerHTML = messages.map(msg => 
