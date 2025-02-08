@@ -7,6 +7,9 @@ import { CREATE_ACCOUNT_PERMISSION_COOKIE_OPTION } from "../cookie/option/create
 import { OTP_CODE_VERIFICATION_COOKIE_OPTION } from "../cookie/option/otp-code-verification.option";
 import { ACCESS_TOKEN_COOKIE_OPTION } from "../cookie/option/access-token.option";
 import { REFRESH_TOKEN_COOKIE_OPTION } from "../cookie/option/refresh-token.option";
+import { SignupDtoInterface } from "./common/interface/dto/signup.interface";
+import { SigninDtoInterface } from "./common/interface/dto/signin.interface";
+import { VerifyOtpDtoInterface } from "./common/interface/dto/verify-otp.interface";
 
 export class AuthControllerClass {
     private readonly _authService: AuthServiceClass = AuthService;
@@ -20,25 +23,25 @@ export class AuthControllerClass {
         return;
     }
 
-    async signup(req: Request, res: Response, next: NextFunction) {
+    async signup(
+        req: Request<any, any, SignupDtoInterface>,
+        res: Response,
+        next: NextFunction
+    ) {
         try {
-            const body = req.body;
-            console.dir(
-                { "auth.controller.ts:24:body": body },
-                { depth: null, colors: true }
-            );
+            const dto: SignupDtoInterface = req.body;
 
-            await this._authService.signup(body);
+            await this._authService.signup(dto);
 
             res.cookie(
                 "create-account-permission",
-                { email: body.email },
+                { email: dto.email },
                 CREATE_ACCOUNT_PERMISSION_COOKIE_OPTION
             );
 
             res.cookie(
                 "otp-code-verification",
-                { email: body.email, isNewUser: true },
+                { email: dto.email, isNewUser: true },
                 OTP_CODE_VERIFICATION_COOKIE_OPTION
             );
             res.json(response({ redirect: "/auth/verify-otp" }));
@@ -47,19 +50,19 @@ export class AuthControllerClass {
         }
     }
 
-    async signin(req: Request, res: Response, next: NextFunction) {
+    async signin(
+        req: Request<any, any, SigninDtoInterface>,
+        res: Response,
+        next: NextFunction
+    ) {
         try {
-            const body = req.body;
-            console.dir(
-                { "auth.controller.ts:57:body": body },
-                { depth: null, colors: true }
-            );
+            const dto: SigninDtoInterface = req.body;
 
-            await this._authService.signin(body);
+            await this._authService.signin(dto);
 
             res.cookie(
                 "otp-code-verification",
-                { email: body.email, isNewUser: false },
+                { email: dto.email, isNewUser: false },
                 OTP_CODE_VERIFICATION_COOKIE_OPTION
             );
             res.json(response({ redirect: "/auth/verify-otp" }));
@@ -77,8 +80,14 @@ export class AuthControllerClass {
         res.render("otp");
     }
 
-    async verifyOtp(req: Request, res: Response, next: NextFunction) {
+    async verifyOtp(
+        req: Request<any, any, VerifyOtpDtoInterface>,
+        res: Response,
+        next: NextFunction
+    ) {
         try {
+            const dto: VerifyOtpDtoInterface = req.body;
+
             const cookie = req.signedCookies["otp-code-verification"];
             if (!cookie)
                 throw exceptionHandler({
@@ -89,7 +98,7 @@ export class AuthControllerClass {
             const result = await this._authService.verifyOtp({
                 email: cookie.email,
                 isNewUser: cookie.isNewUser,
-                code: req.body.code,
+                code: dto.code,
             });
 
             if (cookie.isNewUser) {

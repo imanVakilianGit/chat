@@ -3,13 +3,16 @@ import { UserRepository } from "../database/mongo-db/repository/user.repository"
 import { CacheOtpRepository } from "../database/node-cache/otp.repository";
 import { JwtService } from "../jwt/jwt.service";
 import { exceptionHandler } from "../common/function/exception-handler.func";
+import { SignupDtoInterface } from "./common/interface/dto/signup.interface";
+import { SigninDtoInterface } from "./common/interface/dto/signin.interface";
+import { VerifyOtpDtoInterface } from "./common/interface/dto/verify-otp.interface";
 
 export class AuthServiceClass {
     private readonly _userRepository = UserRepository;
     private readonly _cacheOtpRepository = CacheOtpRepository;
     private readonly _jwtService = JwtService;
 
-    async signup(dto: { email: string }): Promise<void> {
+    async signup(dto: SignupDtoInterface): Promise<void> {
         await this._checkExistsUserByEmail(dto.email);
 
         const otpCode = this._createOtpCode();
@@ -20,7 +23,7 @@ export class AuthServiceClass {
         this._saveOtpCodeIntoCache(dto.email, otpCode);
     }
 
-    async signin(dto: { email: string }): Promise<void> {
+    async signin(dto: SigninDtoInterface): Promise<void> {
         await this.findOneUserByEmailOrFail(dto.email);
 
         const otpCode = this._createOtpCode();
@@ -31,7 +34,9 @@ export class AuthServiceClass {
         this._saveOtpCodeIntoCache(dto.email, otpCode);
     }
 
-    async verifyOtp(dto: { email: string; isNewUser: boolean; code: string }) {
+    async verifyOtp(
+        dto: VerifyOtpDtoInterface & { email: string; isNewUser: boolean }
+    ) {
         const otpCode = this._cacheOtpRepository.get(dto.email);
         if (!otpCode)
             throw exceptionHandler({ statusCode: 400, message: "otp expired" });
