@@ -84,7 +84,7 @@ class Main {
                     { depth: null, colors: true }
                 );
 
-                res.status(err.statusCode).json({
+                res.status(err.statusCode ?? 500).json({
                     success: err.success ?? false,
                     statusCode: err.statusCode ?? 500,
                     message: err.message ?? "internal server error",
@@ -95,7 +95,6 @@ class Main {
     }
 
     private _ioConnection() {
-        // new SocketServiceClass(this._io);
         SocketServiceClass.getInstance(this._io);
     }
 }
