@@ -120,10 +120,9 @@ document.addEventListener("DOMContentLoaded", () => {
         event.preventDefault(); // Prevent default form submission
 
         const name = document.getElementById("name").value;
-        const nickName = document.getElementById("nickname").value;
+        const link = document.getElementById("link").value;
         const bio = document.getElementById("bio").value;
-        const body = { name, nickName };
-        if (bio) Object.assign({ bio }, body);
+        const body = { name, link, bio };
         getResultAndProcess({ path: "/group/create", body });
     });
 });

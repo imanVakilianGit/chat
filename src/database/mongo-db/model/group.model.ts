@@ -9,7 +9,7 @@ import {
 interface GroupInterface {
     _id: ObjectId;
     name: string;
-    nickName: string;
+    link: string;
     bio?: string;
     owner: ObjectId;
     users?: ObjectId[];
@@ -24,11 +24,11 @@ const GroupSchema = new Schema<GroupInterface>(
             type: String,
             minlength: 1,
             maxlength: 20,
-            unique: true,
             required: true,
         },
-        nickName: {
+        link: {
             type: String,
+            unique: true,
             minlength: 1,
             maxlength: 20,
             required: true,

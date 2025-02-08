@@ -1,15 +1,11 @@
 import { ObjectId } from "mongoose";
 import { GroupModel } from "../model/group.model";
+import { CreateGroupDtoInterface } from "../../../group/common/interface/dto/create.interface";
 
 class GroupRepositoryClass {
     private readonly _model = GroupModel;
 
-    create(data: {
-        name: string;
-        nickName: string;
-        bio?: string;
-        owner: ObjectId;
-    }) {
+    create(data: CreateGroupDtoInterface & { owner: ObjectId }) {
         return this._model.create({ ...data, users: [data.owner] });
     }
 
@@ -17,8 +13,8 @@ class GroupRepositoryClass {
         return this._model.find(data);
     }
 
-    findOneByName(name: string) {
-        return this._model.findOne({ name });
+    findOneByName(link: string) {
+        return this._model.findOne({ link });
     }
 }
 

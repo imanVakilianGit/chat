@@ -1,5 +1,6 @@
 import { ObjectId } from "mongoose";
 import { UserModel } from "../model/user.model";
+import { CreateUserDtoInterface } from "../../../user/common/interface/dto/create.interface";
 
 class UserRepositoryClass {
     private readonly _model = UserModel;
@@ -12,12 +13,7 @@ class UserRepositoryClass {
         return this._model.findById(id);
     }
 
-    create(data: {
-        email: string;
-        firstName: string;
-        lastName?: string;
-        bio?: string;
-    }) {
+    create(data: CreateUserDtoInterface & { email: string }) {
         return this._model.create(data);
     }
 
