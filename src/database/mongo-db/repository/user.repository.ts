@@ -1,3 +1,4 @@
+import { ObjectId } from "mongoose";
 import { UserModel } from "../model/user.model";
 
 class UserRepositoryClass {
@@ -7,7 +8,7 @@ class UserRepositoryClass {
         return this._model.findOne({ email });
     }
 
-    findOneById(id: string) {
+    findOneById(id: string | ObjectId) {
         return this._model.findById(id);
     }
 
@@ -18,6 +19,14 @@ class UserRepositoryClass {
         bio?: string;
     }) {
         return this._model.create(data);
+    }
+
+    async addGroup(id: ObjectId, data: { groupId: ObjectId }) {
+        const user = await this.findOneById(id);
+        if (!user) throw "";
+
+        user.groups?.push(data.groupId);
+        user.save();
     }
 }
 

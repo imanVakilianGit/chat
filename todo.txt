@@ -10,3 +10,4 @@ add lint and prettier.
 if message in response exists => alert message response.
 validate refresh token and save it into memory.
 add feature profile.
+add stringify into dto validations.
