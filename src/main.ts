@@ -95,7 +95,8 @@ class Main {
     }
 
     private _ioConnection() {
-        new SocketServiceClass(this._io);
+        // new SocketServiceClass(this._io);
+        SocketServiceClass.getInstance(this._io);
     }
 }
 new Main();

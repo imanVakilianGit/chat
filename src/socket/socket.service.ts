@@ -6,6 +6,7 @@ import { ObjectId } from "mongoose";
 import { UserInterface } from "../database/mongo-db/model/user.model";
 
 export class SocketServiceClass {
+    private static _instance: SocketServiceClass;
     private _io: Server;
     private readonly _jwtService = JwtService;
     private readonly _userRepository = UserRepository;
@@ -13,44 +14,50 @@ export class SocketServiceClass {
 
     constructor(io: Server) {
         this._io = io;
-        // this._main()
-        //     .then(() => {})
-        //     .catch(() => {});
         this._main();
     }
 
+    public static getInstance(io: Server): SocketServiceClass {
+        if (!this._instance) {
+            this._instance = new SocketServiceClass(io);
+        }
+        return this._instance;
+    }
+
     private _main() {
+        this._io.removeAllListeners();
         this._io.on("connection", async (socket) => {
-            const { socketId, user } = await this._guard(socket);
-            this._getGroups(socket, user?._id);
+            this._guard(socket);
+            this._getGroups(socket);
         });
     }
 
-    private async _guard(socket: Socket) {
-        const socketId = socket.id;
-        const token = socket.handshake.auth.token;
+    private _guard(socket: Socket) {
+        socket.use(async (e, next) => {
+            const socketId = socket.id;
+            const token = socket.handshake.auth.token;
 
-        const { userId } = this._jwtService.verifyAccessToken(token) as any;
-        console.dir(
-            { "socket.service.ts:32:user": { socketId, token, userId } },
-            { depth: null, colors: true }
-        );
-        const user = await this._userRepository.findOneById(userId);
+            const { userId } = this._jwtService.verifyAccessToken(token) as any;
+            console.dir(
+                { "socket.service.ts:32:user": { socketId, token, userId } },
+                { depth: null, colors: true }
+            );
+            const user = await this._userRepository.findOneById(userId);
+            if (!user) next(new Error("user not found"));
 
-        return {
-            socketId,
-            user,
-        };
+            socket["user"] = user;
+            next();
+        });
     }
 
-    private _getGroups(socket: Socket, userId?: ObjectId) {
+    private _getGroups(socket: Socket) {
         socket.on("group-list", async () => {
-            console.log("=================");
-            console.log("group-list");
+            const groupIds = socket["user"].groups;
+
             const groups = await this._groupRepository.findAll({
-                owner: userId,
+                _id: groupIds ?? [],
             });
-            // socket.to(socketId).emit("groups", groups);
+
             socket.emit("groups", groups);
         });
     }
