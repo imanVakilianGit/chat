@@ -21,7 +21,7 @@ export function verifyOtpDto(
         const validate = VerifyOtpDtoValidator.safeParse(dto);
 
         if (!validate.success) {
-            const message: string = validate.error?.issues[0].message;
+            const message: string = validate.error.issues[0].message;
             const statusCode = 400;
             next(exceptionHandler({ statusCode, message }));
         }

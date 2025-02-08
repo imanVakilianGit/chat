@@ -10,7 +10,7 @@ const SigninDtoValidator = z.object({
         .string({ message: "email must be string" })
         .email("email is invalid")
         .min(6, "email must not be less than 6 characters")
-        .max(30, "email must not be more than 30 characters"),
+        .max(35, "email must not be more than 35 characters"),
 });
 
 export function signinDto(
@@ -23,7 +23,7 @@ export function signinDto(
         const validate = SigninDtoValidator.safeParse(dto);
 
         if (!validate.success) {
-            const message: string = validate.error?.issues[0].message;
+            const message: string = validate.error.issues[0].message;
             const statusCode = 400;
             next(exceptionHandler({ statusCode, message }));
         }

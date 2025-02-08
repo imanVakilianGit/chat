@@ -4,6 +4,7 @@ import { exceptionHandler } from "../common/function/exception-handler.func";
 import { response } from "../common/function/response.func";
 import { ACCESS_TOKEN_COOKIE_OPTION } from "../cookie/option/access-token.option";
 import { REFRESH_TOKEN_COOKIE_OPTION } from "../cookie/option/refresh-token.option";
+import { CreateUserDtoInterface } from "./common/interface/dto/create.interface";
 
 class UserControllerClass {
     private readonly _userService = UserService;
@@ -18,9 +19,13 @@ class UserControllerClass {
         res.render("create-account");
     }
 
-    async create(req: Request, res: Response, next: NextFunction) {
+    async create(
+        req: Request<any, any, CreateUserDtoInterface>,
+        res: Response,
+        next: NextFunction
+    ) {
         try {
-            const body = req.body;
+            const dto = req.body;
             const cookie = req.signedCookies["create-account-permission"];
             if (!cookie)
                 throw exceptionHandler({
@@ -28,25 +33,20 @@ class UserControllerClass {
                     redirect: "/auth/signup",
                 });
 
-            const dto = { email: cookie.email, firstName: body.firstName };
-            if (body.lastName) Object.assign({ lastName: body.lastName }, dto);
-            if (body.bio) Object.assign({ bio: body.bio }, dto);
-            console.dir(
-                { "user.controller.ts:32:dto": dto },
-                { depth: null, colors: true }
-            );
-
-            const result = await this._userService.create(dto);
+            const result = await this._userService.create({
+                ...dto,
+                email: cookie.email,
+            });
 
             res.cookie(
                 "access-token",
-                result?.accessToken,
+                result.accessToken,
                 ACCESS_TOKEN_COOKIE_OPTION
             );
 
             res.cookie(
                 "refresh-token",
-                result?.refreshToken,
+                result.refreshToken,
                 REFRESH_TOKEN_COOKIE_OPTION
             );
 

@@ -94,8 +94,8 @@ document
     ?.addEventListener("submit", async function (event) {
         event.preventDefault();
 
-        const firstName = document.getElementById("firstname").value;
-        const lastName = document.getElementById("lastname").value;
+        const firstName = document.getElementById("firstName").value;
+        const lastName = document.getElementById("lastName").value;
         const bio = document.getElementById("bio").value;
 
         if (!firstName) {
@@ -107,8 +107,8 @@ document
             path: "/user/create-account",
             body: {
                 firstName,
-                lastName: lastName,
-                bio: bio,
+                lastName,
+                bio,
             },
         });
     });

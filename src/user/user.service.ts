@@ -1,16 +1,12 @@
 import { UserRepository } from "../database/mongo-db/repository/user.repository";
 import { JwtService } from "../jwt/jwt.service";
+import { CreateUserDtoInterface } from "./common/interface/dto/create.interface";
 
 class UserServiceClass {
     private readonly _userRepository = UserRepository;
     private readonly _jwtService = JwtService;
 
-    async create(dto: {
-        email: string;
-        firstName: string;
-        lastName?: string;
-        bio?: string;
-    }) {
+    async create(dto: CreateUserDtoInterface & { email: string }) {
         const user = await this._userRepository.create(dto);
 
         const accessToken = this._jwtService.generateAccessToken({

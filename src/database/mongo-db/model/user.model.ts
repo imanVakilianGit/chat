@@ -31,14 +31,14 @@ const UserSchema = new Schema<UserInterface>(
         firstName: {
             type: String,
             required: true,
-            minlength: 3,
+            minlength: 1,
             maxlength: 25,
         },
 
         lastName: {
             type: String,
             required: false,
-            minlength: 3,
+            minlength: 1,
             maxlength: 25,
         },
 
