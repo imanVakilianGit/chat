@@ -11,3 +11,5 @@ if message in response exists => alert message response.
 validate refresh token and save it into memory.
 add feature profile.
 add stringify into dto validations.
+store messages into redis.
+add rabbitmq for sending messages.

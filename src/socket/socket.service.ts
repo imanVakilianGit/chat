@@ -4,6 +4,7 @@ import { UserRepository } from "../database/mongo-db/repository/user.repository"
 import { GroupRepository } from "../database/mongo-db/repository/group.repository";
 import { ObjectId } from "mongoose";
 import { UserInterface } from "../database/mongo-db/model/user.model";
+import { GroupMessageRepository } from "../database/mongo-db/repository/group-message.repository";
 
 export class SocketServiceClass {
     private static _instance: SocketServiceClass;
@@ -11,6 +12,7 @@ export class SocketServiceClass {
     private readonly _jwtService = JwtService;
     private readonly _userRepository = UserRepository;
     private readonly _groupRepository = GroupRepository;
+    private readonly _groupMessageRepository = GroupMessageRepository;
 
     constructor(io: Server) {
         this._io = io;
@@ -29,6 +31,8 @@ export class SocketServiceClass {
         this._io.on("connection", async (socket) => {
             this._guard(socket);
             this._getGroups(socket);
+            this._getGroupMessages(socket);
+            this._createGroupMessages(socket);
         });
     }
 
@@ -59,6 +63,35 @@ export class SocketServiceClass {
             });
 
             socket.emit("groups", groups);
+        });
+    }
+
+    private _getGroupMessages(socket: Socket) {
+        socket.on("get-group-messages", async (groupId) => {
+            console.dir(
+                { "socket.service.ts:70:groupId": groupId },
+                { depth: null, colors: true }
+            );
+            const messages =
+                await this._groupMessageRepository.findAllGroupMessagesWithPagination(
+                    groupId
+                );
+
+            socket.emit("group-messages", messages);
+        });
+    }
+
+    private _createGroupMessages(socket: Socket) {
+        socket.on("create-group-message", async ({ groupId, message }) => {
+            console.dir(
+                { "socket.service.ts:86:data": { groupId, message } },
+                { depth: null, colors: true }
+            );
+            await this._groupMessageRepository.create({
+                content: message,
+                group: groupId,
+                sender: socket["user"]._id,
+            });
         });
     }
 }
