@@ -32,7 +32,7 @@ export class SocketServiceClass {
             this._guard(socket);
             this._getGroups(socket);
             this._getGroupMessages(socket);
-            this._createGroupMessages(socket);
+            this._sendMessageToGroup(socket);
         });
     }
 
@@ -81,17 +81,19 @@ export class SocketServiceClass {
         });
     }
 
-    private _createGroupMessages(socket: Socket) {
-        socket.on("create-group-message", async ({ groupId, message }) => {
+    private _sendMessageToGroup(socket: Socket) {
+        socket.on("send-message-to-group", async ({ groupId, content }) => {
             console.dir(
-                { "socket.service.ts:86:data": { groupId, message } },
+                { "socket.service.ts:86:data": { groupId, content } },
                 { depth: null, colors: true }
             );
-            await this._groupMessageRepository.create({
-                content: message,
+            const message = await this._groupMessageRepository.create({
+                content,
                 group: groupId,
                 sender: socket["user"]._id,
             });
+
+            socket.emit("new-message", message);
         });
     }
 }
