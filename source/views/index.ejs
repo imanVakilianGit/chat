@@ -37,7 +37,7 @@
                 </div>
 
                 <!-- Message Input Form -->
-                <div class="p-3 border-top">
+                <div class="p-3 border-top" id="send-box" hidden>
                     <form id="chat-form" class="d-flex">
                         <input type="text" id="chat-input" class="form-control me-2" placeholder="Type a message...">
                         <button type="submit" class="btn btn-primary">Send</button>
@@ -49,7 +49,8 @@
 
     <!-- Socket.IO Client Library -->
     <script src="/socket.io/socket.io.js"></script>
-    <script>
+    <script src="/index.js"></script>
+    <!-- <script>
         // Initialize Socket.IO
         const socketToken = document.cookie.split('=')[1];
         console.log(socketToken);
@@ -58,6 +59,9 @@
                 token: socketToken,
             }
         });
+
+        const chatWIndow = document.getElementById('chat-window');
+        const sendBox = document.getElementById('send-box');
 
         // Fetch and display group list
         socket.emit("group-list", '');
@@ -71,24 +75,56 @@
             ).join("");
 
             // Add click event to group items
-            // roomList.querySelectorAll("li").forEach(item => {
-            //     item.addEventListener("click", () => {
-            //         const groupId = item.getAttribute("data-room");
-            //         socket.emit("join-room", groupId); // Join the selected group
-            //     });
-            // });
+            roomList.querySelectorAll("li").forEach(item => {
+                item.addEventListener("click", () => {
+                    const groupId = item.getAttribute("data-room");
+                    console.log(groupId);
+                    chatWIndow.setAttribute('group-id', groupId)
+                    sendBox.hidden = false;
+                    // socket.emit("join-room", groupId); // Join the selected group
+                    socket.emit("get-group-messages", groupId);
+                });
+            });
         });
+        socket.on('group-messages', (messages) => {
+            console.log(messages);
+            const chatWindow = document.getElementById('chat-window') 
+            chatWIndow.innerHTML = ''
+
+            messages.forEach(element => {
+                   const newMessage = document.createElement("div");
+                   newMessage.classList.add("message", "sent");
+                   newMessage.innerHTML = element.content;
+                // if(element.sender)
+                   chatWindow.appendChild(newMessage);
+                //    input.value = "";
+                   chatWindow.scrollTop = chatWindow.scrollHeight;
+                
+            });
+        })
+        document
+           .getElementById("chat-form")
+           ?.addEventListener("submit", function (event) {
+               event.preventDefault();
+               const input = document.getElementById("chat-input");
+               const message = input.value.trim();
+               console.log("message: ", message);
+               if (message) {
+                    const groupId = chatWIndow.getAttribute('group-id')
+                   socket.emit("create-group-message", { groupId, message });
+               }
+           });
 
         // Fetch and display messages for a group
-        socket.on("room-messages", (messages) => {
-            const messagesContainer = document.getElementById("messages");
-            messagesContainer.innerHTML = messages.map(msg => 
-                '<div class="message ' + (msg.sender === "You" ? "sent" : "received") + '">' +
-                    '<strong>' + msg.sender + ':</strong> ' + msg.text +
-                '</div>'
-            ).join("");
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        });
+        // socket.on("room-messages", (messages) => {
+        //     const messagesContainer = document.getElementById("messages");
+        //     messagesContainer.innerHTML = messages.map(msg => 
+        //         '<div class="message ' + (msg.sender === "You" ? "sent" : "received") + '">' +
+        //             '<strong>' + msg.sender + ':</strong> ' + msg.text +
+        //         '</div>'
+        //     ).join("");
+        //     messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        // });
 
         // Handle message submission
         document.getElementById("chat-form").addEventListener("submit", function (event) {
@@ -122,5 +158,5 @@
                 item.style.display = roomName.includes(searchTerm) ? "block" : "none";
             });
         });
-    </script>
+    </script> -->
 ` }) %>
