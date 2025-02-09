@@ -46,10 +46,12 @@ const GroupSchema = new Schema<GroupInterface>(
         owner: {
             type: Types.ObjectId,
             required: true,
+            ref: "users",
         },
         users: {
             type: [Types.ObjectId],
             required: false,
+            ref: "users",
         },
     },
     { timestamps: true, versionKey: false }

@@ -52,6 +52,7 @@ const UserSchema = new Schema<UserInterface>(
         groups: {
             type: [Types.ObjectId],
             required: false,
+            ref: "groups",
         },
     },
     { timestamps: true, versionKey: false }
