@@ -5,13 +5,13 @@ class JwtServiceClass {
 
     generateAccessToken(payload: { userId: string }) {
         return this._jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET ?? "", {
-            expiresIn: 1 * 60 * 10,
+            expiresIn: "600s",
         });
     }
 
     generateRefreshToken(payload: { userId: string }) {
         return this._jwt.sign(payload, process.env.REFRESH_TOKEN_SECRET ?? "", {
-            expiresIn: 1 * 60 * 60 * 24 * 21,
+            expiresIn: "21d",
         });
     }
 

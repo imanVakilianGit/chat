@@ -57,6 +57,7 @@ export class SocketServiceClass {
     private _getGroups(socket: Socket) {
         socket.on("group-list", async () => {
             const groupIds = socket["user"].groups;
+            this._joinToRooms(socket);
 
             const groups = await this._groupRepository.findAll({
                 _id: groupIds ?? [],
@@ -72,10 +73,27 @@ export class SocketServiceClass {
                 { "socket.service.ts:70:groupId": groupId },
                 { depth: null, colors: true }
             );
-            const messages =
+            const messages = (
                 await this._groupMessageRepository.findAllGroupMessagesWithPagination(
                     groupId
-                );
+                )
+            ).map((msg) => {
+                if (msg.sender["_id"].toString() == socket["user"]._id)
+                    return {
+                        content: msg.content,
+                        sender: { firstName: msg.sender["firstName"] },
+                        isYou: true,
+                    };
+                return {
+                    content: msg.content,
+                    sender: { firstName: msg.sender["firstName"] },
+                };
+            });
+
+            console.dir(
+                { "socket.service.ts:92:messages": messages },
+                { depth: null, colors: true }
+            );
 
             socket.emit("group-messages", messages);
         });
@@ -93,7 +111,17 @@ export class SocketServiceClass {
                 sender: socket["user"]._id,
             });
 
-            socket.emit("new-message", message);
+            socket.emit("new-message", {
+                content: message.content,
+                sender: {
+                    firstName: message.sender["firstName"],
+                },
+                isYou: message.sender["_id"].toString() == socket["user"]._id,
+            });
         });
+    }
+
+    private _joinToRooms(socket: Socket) {
+        socket.join([socket["user"]._id, ...socket["user"].groups]);
     }
 }

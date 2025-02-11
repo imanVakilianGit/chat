@@ -65,7 +65,6 @@ function sendMessageToGroup() {
 
 function getNewMessage() {
     socket.on("new-message", (message) => {
-        console.log(message);
         _getMessage(message);
     });
 }
@@ -74,10 +73,10 @@ function _getMessage(message) {
     const messageElement = document.createElement("div");
     messageElement.classList.add(
         "message",
-        message.sender === "You" ? "sent" : "received"
+        message.isYou ? "sent" : "received"
     );
     messageElement.innerHTML =
-        "<strong>" + message.sender + ":</strong> " + message.content;
+        "<strong>" + message.sender.firstName + ":</strong> " + message.content;
 
     messagesContainer.appendChild(messageElement);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
