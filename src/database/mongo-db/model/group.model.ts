@@ -57,4 +57,6 @@ const GroupSchema = new Schema<GroupInterface>(
     { timestamps: true, versionKey: false }
 );
 
+GroupSchema.index({ link: "text", name: "text" });
+
 export const GroupModel = model("groups", GroupSchema);

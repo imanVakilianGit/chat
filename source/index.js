@@ -17,6 +17,7 @@ function getGroups() {
     socket.emit("group-list", "");
 
     socket.on("groups", (groups) => {
+        roomList.innerHTML = "";
         groups.forEach((group) => {
             const groupElement = document.createElement("li");
 
@@ -59,12 +60,27 @@ function sendMessageToGroup() {
                 groupId: chatWindow.getAttribute("group-id"),
                 content: message,
             });
+            const messageElement = document.createElement("div");
+            messageElement.classList.add("message", "sent");
+            messageElement.innerHTML =
+                // "<strong>" +
+                // message.sender.firstName +
+                // ":</strong> " +
+                // message.content;
+                "<strong>" +
+                // message.sender.firstName +
+                ":</strong> " +
+                message;
+
+            messagesContainer.appendChild(messageElement);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
     });
 }
 
 function getNewMessage() {
     socket.on("new-message", (message) => {
+        console.log("new message", message);
         _getMessage(message);
     });
 }
@@ -81,20 +97,78 @@ function _getMessage(message) {
     messagesContainer.appendChild(messageElement);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
+
+function searchRooms() {
+    // Handle search functionality
+    const searchInput = document.getElementById("search-rooms");
+    const searchResults = document.getElementById("search-results");
+
+    searchInput.addEventListener("input", function () {
+        const searchTerm = this.value.trim();
+
+        if (searchTerm) {
+            socket.emit("search-rooms", searchTerm); // Send search term to the server
+        } else {
+            searchResults.style.display = "none"; // Hide search results if the input is empty
+        }
+    });
+
+    // Handle search results from the server
+    socket.on("room-search-results", (results) => {
+        console.log("new groups =>", results);
+        if (results.length > 0) {
+            // searchResults.innerHTML = results.map((room) => {
+            searchResults.innerHTML = "";
+            results
+                .map((room) => {
+                    const div = document.createElement("div");
+                    div.classList.add(
+                        "list-group-item",
+                        "d-flex",
+                        "justify-content-between",
+                        "align-items-center"
+                    );
+                    div.innerText = room.name;
+
+                    const btn = document.createElement("button");
+                    btn.classList.add("btn", "btn-sm", "btn-primary");
+                    btn.setAttribute("data-room", room._id);
+                    btn.innerText = "Join";
+                    div.appendChild(btn);
+
+                    searchResults.appendChild(div);
+                })
+                .join("");
+            searchResults.style.display = "block"; // Show search results
+
+            // Add click event to join buttons
+            searchResults.querySelectorAll("button").forEach((button) => {
+                button.addEventListener("click", () => {
+                    const roomId = button.getAttribute("data-room");
+                    socket.emit("join-group", roomId); // Join the selected room
+                    searchResults.style.display = "none"; // Hide search results after joining
+                    searchInput.value = ""; // Clear the search input
+                });
+            });
+        } else {
+            searchResults.innerHTML =
+                '<div class="list-group-item">No rooms found.</div>';
+            searchResults.style.display = "block"; // Show "No rooms found" message
+        }
+    });
+}
 // ==========================================
 
-getGroups();
-getGroupMessages();
-sendMessageToGroup();
-getNewMessage();
+socket.on("disconnect", (a, b) => {
+    console.log("disconnect");
+});
 
-// Handle search functionality
-document.getElementById("search-rooms").addEventListener("input", function () {
-    const searchTerm = this.value.toLowerCase();
-    const roomItems = document.querySelectorAll("#room-list li");
-
-    roomItems.forEach((item) => {
-        const roomName = item.textContent.toLowerCase();
-        item.style.display = roomName.includes(searchTerm) ? "block" : "none";
-    });
+socket.on("connect", () => {
+    socket.removeAllListeners();
+    console.log("connected");
+    getGroups();
+    getGroupMessages();
+    sendMessageToGroup();
+    getNewMessage();
+    searchRooms();
 });
