@@ -3,13 +3,13 @@ create global error handle. DONE
 every route should have redirect prop in responses. DONE
 handle event for verify-otp in front. DONE
 auth guard. DONE
+validation for inputs. DONE
+add stringify into dto validations. DONE
 
 send otp code to email.
-validation for inputs.
 add lint and prettier.
-if message in response exists => alert message response.
+if message in failed response exists => alert message response.
 validate refresh token and save it into memory.
 add feature profile.
-add stringify into dto validations.
 store messages into redis.
 add rabbitmq for sending messages.
