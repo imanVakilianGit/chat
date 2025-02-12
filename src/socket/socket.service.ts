@@ -1,9 +1,7 @@
-import { Server, Socket } from "socket.io";
+import { Server } from "socket.io";
 import { JwtService } from "../jwt/jwt.service";
 import { UserRepository } from "../database/mongo-db/repository/user.repository";
 import { GroupRepository } from "../database/mongo-db/repository/group.repository";
-import { ObjectId } from "mongoose";
-import { UserInterface } from "../database/mongo-db/model/user.model";
 import { GroupMessageRepository } from "../database/mongo-db/repository/group-message.repository";
 
 export class SocketServiceClass {
@@ -28,100 +26,188 @@ export class SocketServiceClass {
 
     private _main() {
         this._io.removeAllListeners();
+
         this._io.on("connection", async (socket) => {
-            this._guard(socket);
-            this._getGroups(socket);
-            this._getGroupMessages(socket);
-            this._sendMessageToGroup(socket);
-        });
-    }
+            // * ===================== guard middleware ===============================================
 
-    private _guard(socket: Socket) {
-        socket.use(async (e, next) => {
-            const socketId = socket.id;
-            const token = socket.handshake.auth.token;
+            socket.use(async (e, next) => {
+                const socketId = socket.id;
+                const token = socket.handshake.auth.token;
 
-            const { userId } = this._jwtService.verifyAccessToken(token) as any;
-            console.dir(
-                { "socket.service.ts:32:user": { socketId, token, userId } },
-                { depth: null, colors: true }
-            );
-            const user = await this._userRepository.findOneById(userId);
-            if (!user) next(new Error("user not found"));
+                const { userId } = this._jwtService.verifyRefreshToken(
+                    token
+                ) as any;
 
-            socket["user"] = user;
-            next();
-        });
-    }
+                if (!userId) {
+                    next(new Error("token expired"));
+                    return;
+                }
 
-    private _getGroups(socket: Socket) {
-        socket.on("group-list", async () => {
-            const groupIds = socket["user"].groups;
-            this._joinToRooms(socket);
+                const user = await this._userRepository.findOneById(userId);
+                if (!user) {
+                    next(new Error("user not found"));
+                    return;
+                }
 
-            const groups = await this._groupRepository.findAll({
-                _id: groupIds ?? [],
+                user.groups?.forEach((group) => {
+                    socket.join(`${group}`);
+                });
+
+                console.dir(
+                    {
+                        "socket.service.ts:55:guard middleware": {
+                            e,
+                            socketId,
+                            token,
+                            userId,
+                            user: {
+                                email: user.email,
+                                firstName: user.firstName,
+                            },
+                            rooms: socket.rooms,
+                        },
+                    },
+                    { depth: null, colors: true }
+                );
+
+                socket["user"] = user;
+                next();
             });
 
-            socket.emit("groups", groups);
+            // * ===================== group list ===============================================
+
+            socket.on("group-list", async () => {
+                const groups = await this._getGroups(socket["user"].groups);
+
+                socket.emit("groups", groups);
+            });
+
+            // * ===================== send-message-to-group ===============================================
+
+            socket.on("send-message-to-group", async ({ groupId, content }) => {
+                const message = await this._sendMessageToGroup({
+                    groupId,
+                    content,
+                    userId: socket["user"]._id,
+                });
+
+                socket.to(groupId).emit("new-message", {
+                    content: message.content,
+                    sender: {
+                        firstName: message.sender["firstName"],
+                    },
+                });
+            });
+
+            // * ===================== get-group-messages ===============================================
+
+            socket.on("get-group-messages", async (groupId) => {
+                const messages = await this._getGroupMessages(
+                    groupId,
+                    socket["user"]._id
+                );
+
+                socket.emit("group-messages", messages);
+            });
+
+            // * ===================== search-rooms ===============================================
+
+            socket.on("search-rooms", async (input) => {
+                const result = await this._searchRooms(
+                    input,
+                    socket["user"]._id
+                );
+
+                socket.emit("room-search-results", result);
+            });
+
+            // * ===================== join-group ===============================================
+
+            socket.on("join-group", async (groupId: string) => {
+                const result = await this._joinToGroup(
+                    groupId,
+                    socket["user"]._id
+                );
+                if (!result) return;
+
+                socket.join(result.user.groups as any);
+                socket["user"] = result.user;
+
+                const groups = await this._getGroups(result.user.groups);
+                socket.emit("groups", groups);
+            });
         });
     }
 
-    private _getGroupMessages(socket: Socket) {
-        socket.on("get-group-messages", async (groupId) => {
-            console.dir(
-                { "socket.service.ts:70:groupId": groupId },
-                { depth: null, colors: true }
-            );
-            const messages = (
-                await this._groupMessageRepository.findAllGroupMessagesWithPagination(
-                    groupId
-                )
-            ).map((msg) => {
-                if (msg.sender["_id"].toString() == socket["user"]._id)
-                    return {
-                        content: msg.content,
-                        sender: { firstName: msg.sender["firstName"] },
-                        isYou: true,
-                    };
+    // ====================================================================================================
+
+    private async _getGroups(groupIds) {
+        const groups = await this._groupRepository.findAll({
+            _id: groupIds ?? [],
+        });
+
+        return groups;
+    }
+
+    private async _getGroupMessages(groupId, userId) {
+        const messages = (
+            await this._groupMessageRepository.findAllGroupMessagesWithPagination(
+                groupId
+            )
+        ).map((msg) => {
+            if (msg.sender["_id"].toString() == userId)
                 return {
                     content: msg.content,
                     sender: { firstName: msg.sender["firstName"] },
+                    isYou: true,
                 };
-            });
-
-            console.dir(
-                { "socket.service.ts:92:messages": messages },
-                { depth: null, colors: true }
-            );
-
-            socket.emit("group-messages", messages);
+            return {
+                content: msg.content,
+                sender: { firstName: msg.sender["firstName"] },
+            };
         });
+
+        return messages;
     }
 
-    private _sendMessageToGroup(socket: Socket) {
-        socket.on("send-message-to-group", async ({ groupId, content }) => {
-            console.dir(
-                { "socket.service.ts:86:data": { groupId, content } },
-                { depth: null, colors: true }
-            );
-            const message = await this._groupMessageRepository.create({
-                content,
-                group: groupId,
-                sender: socket["user"]._id,
-            });
-
-            socket.emit("new-message", {
-                content: message.content,
-                sender: {
-                    firstName: message.sender["firstName"],
-                },
-                isYou: message.sender["_id"].toString() == socket["user"]._id,
-            });
+    private async _sendMessageToGroup(data: {
+        groupId: string;
+        content: string;
+        userId;
+    }) {
+        const message = await this._groupMessageRepository.create({
+            content: data.content,
+            group: data.groupId as any,
+            sender: data.userId,
         });
+
+        return message;
     }
 
-    private _joinToRooms(socket: Socket) {
-        socket.join([socket["user"]._id, ...socket["user"].groups]);
+    private async _searchRooms(input: string, userId) {
+        const result = await this._groupRepository.findAllWithSearch({
+            input,
+            userId,
+        });
+        return result;
+    }
+
+    private async _joinToGroup(groupId, userId) {
+        const user = await this._userRepository.findOneById(userId);
+        const group = await this._groupRepository.findOneById(groupId);
+        if (!user || !group) {
+            throw new Error();
+        }
+
+        if (user.groups?.includes(groupId)) return;
+        if (group.users?.includes(userId)) return;
+
+        group.users?.push(userId);
+        await group.save();
+
+        user.groups?.push(groupId);
+        await user.save();
+
+        return { user, group };
     }
 }

@@ -35,7 +35,7 @@ export async function renderAuthGuard(
                 res.redirect("/auth/signup");
                 return;
             }
-            res.cookie("socket-token", accessToken);
+            res.cookie("socket-token", refreshToken);
             req["user"] = user;
             next();
             return;
@@ -72,7 +72,7 @@ export async function renderAuthGuard(
             newRefreshToken,
             REFRESH_TOKEN_COOKIE_OPTION
         );
-        res.cookie("socket-token", newAccessToken);
+        res.cookie("socket-token", newRefreshToken);
 
         req["user"] = user;
         next();
@@ -125,7 +125,7 @@ export async function authGuard(
                 );
                 return;
             }
-            res.cookie("socket-token", accessToken);
+            res.cookie("socket-token", refreshToken);
             req["user"] = user;
             next();
             return;
@@ -171,7 +171,7 @@ export async function authGuard(
             newRefreshToken,
             REFRESH_TOKEN_COOKIE_OPTION
         );
-        res.cookie("socket-token", newAccessToken);
+        res.cookie("socket-token", newRefreshToken);
         req["user"] = user;
         next();
     } catch (error) {
