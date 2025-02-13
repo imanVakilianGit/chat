@@ -1,4 +1,4 @@
-import { Server } from "socket.io";
+import { Server, Socket } from "socket.io";
 import { JwtService } from "../jwt/jwt.service";
 import { UserRepository } from "../database/mongo-db/repository/user.repository";
 import { GroupRepository } from "../database/mongo-db/repository/group.repository";
@@ -14,7 +14,15 @@ export class SocketServiceClass {
 
     constructor(io: Server) {
         this._io = io;
-        this._main();
+        try {
+            this._main();
+        } catch (error) {
+            console.dir(
+                { "socket.service.ts:20:error": error },
+                { depth: null, colors: true }
+            );
+            this._main();
+        }
     }
 
     public static getInstance(io: Server): SocketServiceClass {
@@ -28,51 +36,54 @@ export class SocketServiceClass {
         this._io.removeAllListeners();
 
         this._io.on("connection", async (socket) => {
+            // * ===================== initial ===============================================
+            await this._initial(socket);
+
             // * ===================== guard middleware ===============================================
 
-            socket.use(async (e, next) => {
-                const socketId = socket.id;
-                const token = socket.handshake.auth.token;
+            // socket.use(async (e, next) => {
+            //     const socketId = socket.id;
+            //     const token = socket.handshake.auth.token;
 
-                const { userId } = this._jwtService.verifyRefreshToken(
-                    token
-                ) as any;
+            //     const { userId } = this._jwtService.verifyRefreshToken(
+            //         token
+            //     ) as any;
 
-                if (!userId) {
-                    next(new Error("token expired"));
-                    return;
-                }
+            //     if (!userId) {
+            //         next(new Error("token expired"));
+            //         return;
+            //     }
 
-                const user = await this._userRepository.findOneById(userId);
-                if (!user) {
-                    next(new Error("user not found"));
-                    return;
-                }
+            //     const user = await this._userRepository.findOneById(userId);
+            //     if (!user) {
+            //         next(new Error("user not found"));
+            //         return;
+            //     }
 
-                user.groups?.forEach((group) => {
-                    socket.join(`${group}`);
-                });
+            //     user.groups?.forEach((group) => {
+            //         socket.join(`${group}`);
+            //     });
 
-                console.dir(
-                    {
-                        "socket.service.ts:55:guard middleware": {
-                            e,
-                            socketId,
-                            token,
-                            userId,
-                            user: {
-                                email: user.email,
-                                firstName: user.firstName,
-                            },
-                            rooms: socket.rooms,
-                        },
-                    },
-                    { depth: null, colors: true }
-                );
+            //     console.dir(
+            //         {
+            //             "socket.service.ts:55:guard middleware": {
+            //                 e,
+            //                 socketId,
+            //                 token,
+            //                 userId,
+            //                 user: {
+            //                     email: user.email,
+            //                     firstName: user.firstName,
+            //                 },
+            //                 rooms: socket.rooms,
+            //             },
+            //         },
+            //         { depth: null, colors: true }
+            //     );
 
-                socket["user"] = user;
-                next();
-            });
+            //     socket["user"] = user;
+            //     next();
+            // });
 
             // * ===================== group list ===============================================
 
@@ -102,6 +113,12 @@ export class SocketServiceClass {
             // * ===================== get-group-messages ===============================================
 
             socket.on("get-group-messages", async (groupId) => {
+                socket.rooms.forEach((room) => {
+                    if (room !== socket.id) socket.leave(room);
+                });
+
+                socket.join(groupId);
+
                 const messages = await this._getGroupMessages(
                     groupId,
                     socket["user"]._id
@@ -140,6 +157,49 @@ export class SocketServiceClass {
     }
 
     // ====================================================================================================
+
+    private async _initial(socket: Socket) {
+        const socketId = socket.id;
+        const token = socket.handshake.auth.token;
+
+        const { userId } = this._jwtService.verifyRefreshToken(token) as any;
+
+        if (!userId) {
+            throw new Error("token expired");
+        }
+
+        const user = await this._userRepository.findOneById(userId);
+        if (!user) {
+            throw new Error("user not found");
+        }
+
+        // user.groups?.forEach((group) => {
+        //     socket.join(`${group}`);
+        // });
+
+        console.dir(
+            {
+                "socket.service.ts:55:initial": {
+                    socketId,
+                    token,
+                    userId,
+                    user: {
+                        email: user.email,
+                        firstName: user.firstName,
+                    },
+                    rooms: socket.rooms,
+                },
+            },
+            { depth: null, colors: true }
+        );
+
+        socket["user"] = user;
+
+        socket.emit("user-detail", {
+            firstName: user.firstName,
+            lastName: user.lastName,
+        });
+    }
 
     private async _getGroups(groupIds) {
         const groups = await this._groupRepository.findAll({

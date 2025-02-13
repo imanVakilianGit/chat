@@ -13,3 +13,4 @@ validate refresh token and save it into memory.
 add feature profile.
 store messages into redis.
 add rabbitmq for sending messages.
+add green circle when new messages sent in group and user not in exact group.

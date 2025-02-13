@@ -12,6 +12,20 @@ const sendBox = document.getElementById("send-box");
 const roomList = document.getElementById("room-list");
 const chatForm = document.getElementById("chat-form");
 const messagesContainer = document.getElementById("messages");
+const userDetail = document.getElementById("user-detail");
+
+function _user() {
+    const userComponent = userDetail.getAttribute("user");
+    const user = JSON.parse(userComponent);
+    return user;
+}
+
+function getUserDetail() {
+    socket.on("user-detail", (user) => {
+        console.log("user =>", user);
+        userDetail.setAttribute("user", JSON.stringify(user));
+    });
+}
 
 function getGroups() {
     socket.emit("group-list", "");
@@ -62,15 +76,9 @@ function sendMessageToGroup() {
             });
             const messageElement = document.createElement("div");
             messageElement.classList.add("message", "sent");
+            const user = _user();
             messageElement.innerHTML =
-                // "<strong>" +
-                // message.sender.firstName +
-                // ":</strong> " +
-                // message.content;
-                "<strong>" +
-                // message.sender.firstName +
-                ":</strong> " +
-                message;
+                "<strong>" + user.firstName + ":</strong> " + message;
 
             messagesContainer.appendChild(messageElement);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -166,6 +174,7 @@ socket.on("disconnect", (a, b) => {
 socket.on("connect", () => {
     socket.removeAllListeners();
     console.log("connected");
+    getUserDetail();
     getGroups();
     getGroupMessages();
     sendMessageToGroup();
